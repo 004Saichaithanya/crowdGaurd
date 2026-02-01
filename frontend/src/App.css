@@ -1,0 +1,172 @@
+/* ---------- RESET ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, #1f3c4a, #0b1e26);
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* ---------- APP LAYOUT ---------- */
+.app {
+  max-width: 1400px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* ---------- HEADER ---------- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+
+.header h1 {
+  font-size: 2rem;
+  letter-spacing: 0.5px;
+}
+
+.status-dot {
+  width: 14px;
+  height: 14px;
+  background: #00ff88;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00ff88;
+}
+
+/* ---------- DASHBOARD GRID ---------- */
+.dashboard {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 25px;
+}
+
+/* ---------- VIDEO CARD ---------- */
+.video-card {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.video-card h2 {
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+  color: #e0f7ff;
+}
+
+.video-card img {
+  width: 100%;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- STATS ---------- */
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- CARDS ---------- */
+.card {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 22px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.card h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  opacity: 0.85;
+}
+
+.card.big {
+  flex: 1;
+}
+
+/* ---------- COUNT ---------- */
+.count {
+  font-size: 3.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* ---------- DENSITY COLORS ---------- */
+.density.low {
+  border-left: 6px solid #00ff88;
+  color: #00ff88;
+}
+
+.density.medium {
+  border-left: 6px solid #ffcc00;
+  color: #ffcc00;
+}
+
+.density.high {
+  border-left: 6px solid #ff4444;
+  color: #ff4444;
+}
+
+/* ---------- ALERT ---------- */
+.alert {
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  background: linear-gradient(135deg, #ff4444, #ff0000);
+  padding: 16px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.8);
+  animation: slideIn 0.4s ease;
+  z-index: 1000;
+}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes slideIn {
+  from {
+    transform: translateX(200px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 900px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 1.6rem;
+  }
+
+  .count {
+    font-size: 2.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .alert {
+    right: 10px;
+    left: 10px;
+  }
+}
