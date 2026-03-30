@@ -42,7 +42,7 @@ def get_density(count):
 def detection_loop():
     global latest_frame
 
-    cap = cv.VideoCapture("data/road_show.mp4")  # or 0 for webcam
+    cap = cv.VideoCapture("data/crowd_video.mp4")  # or 0 for webcam
 
     while cap.isOpened():
         ret, frame = cap.read()
