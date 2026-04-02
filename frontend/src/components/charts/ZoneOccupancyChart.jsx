@@ -1,14 +1,18 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
-export function ZoneOccupancyChart({ zones = [0, 0, 0, 0], total = 1 }) {
-  const zoneData = zones.map((count, idx) => {
-    const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
-    let color = 'bg-secondary'; // green
-    if (percentage > 80) color = 'bg-error'; // red
-    else if (percentage > 60) color = 'bg-tertiary'; // yellow
-    return { name: `ZONE ${idx + 1}`, value: percentage, color };
-  });
+export function ZoneOccupancyChart({ data }) {
+  // data is an array of 4 integers [northWest, northEast, southWest, southEast]
+  const counts = data || [0, 0, 0, 0];
+  const maxCapacity = 20; // assumed max per zone for percentage
+  const getPercentage = (count) => Math.min(100, Math.round((count / maxCapacity) * 100));
+  const getColor = (pct) => pct > 80 ? 'bg-error' : pct > 50 ? 'bg-tertiary' : 'bg-secondary';
+  
+  const zones = counts.map((count, i) => ({
+    name: `ZONE ${i + 1}`,
+    value: getPercentage(count),
+    color: getColor(getPercentage(count)),
+  }));
 
   return (
     <div className="glass-card p-6 h-full flex flex-col border ghost-border group">

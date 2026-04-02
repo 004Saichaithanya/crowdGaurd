@@ -66,7 +66,7 @@ export function Dashboard({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ minHeight: 250 }}>
             <CrowdFlowChart data={history} />
-            <ZoneOccupancyChart zones={liveData.zones} total={liveData.people_count} />
+            <ZoneOccupancyChart data={liveData.zones} />
           </div>
         </div>
 

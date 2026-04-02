@@ -14,9 +14,7 @@ print("Ultralytics imported", flush=True)
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
-
-BASE_DIR = Path(__file__).resolve().parent
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # ---------------- LOAD MODEL ----------------
 print("Loading YOLO model...", flush=True)
@@ -172,7 +170,7 @@ def detection_loop():
         print(f"Failed to open video source: {BASE_DIR / 'data' / 'crowd_vid.mp4'}", flush=True)
         return
 
-    print("Detection loop started", flush=True)
+    cap = cv.VideoCapture("data/road_show.mp4")  # or 0 for webcam
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -192,6 +190,7 @@ def detection_loop():
 
         count = 0
 
+        zones = [0, 0, 0, 0]
         if results.boxes:
             for box in results.boxes:
                 if int(box.cls[0]) == 0:  # person class
@@ -203,6 +202,16 @@ def detection_loop():
 
                     person_centers.append((cx, cy))
                     count += 1
+                    
+                    # Quadrant assignment
+                    if cx < 320 and cy < 240:
+                        zones[0] += 1
+                    elif cx >= 320 and cy < 240:
+                        zones[1] += 1
+                    elif cx < 320 and cy >= 240:
+                        zones[2] += 1
+                    else:
+                        zones[3] += 1
 
         # ---------------- CALCULATE ZONES ----------------
         zones = [0, 0, 0, 0]
@@ -281,9 +290,7 @@ def detection_loop():
         socketio.emit("crowd_update", {
             "people_count": count,
             "density": density,
-            "zones": zones,
-            "alerts_count": len(active_alerts()),
-            "high_density_events": high_density_events
+            "zones": zones
         })
 
         time.sleep(0.04)  # ~25 FPS

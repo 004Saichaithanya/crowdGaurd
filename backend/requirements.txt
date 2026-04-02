@@ -1,7 +1,6 @@
 flask
 flask-cors
 flask-socketio
-eventlet
 opencv-python
 numpy
 ultralytics
