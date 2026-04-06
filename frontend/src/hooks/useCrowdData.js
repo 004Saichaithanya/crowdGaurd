@@ -385,7 +385,6 @@ export function useCrowdData() {
       const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       
       setLiveData({
-      setLiveData({
         camera_id: data.camera_id || null,
         camera_name: data.camera_name || null,
         people_count: data.people_count ?? null,
@@ -395,7 +394,6 @@ export function useCrowdData() {
         average_latency_ms: data.average_latency_ms ?? null,
         inference_latency_ms: data.inference_latency_ms ?? null,
         deployment_mode: data.deployment_mode || null,
-      });
       });
       setLastUpdated(now);
       setAlertSummary(prev => ({

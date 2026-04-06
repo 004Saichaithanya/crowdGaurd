@@ -26,7 +26,7 @@ export function ZoneOccupancyChart({ data }) {
       </div>
       
       <div className="flex-1 space-y-6">
-        {zoneData.map((zone, idx) => (
+        {zones.map((zone, idx) => (
           <div key={idx} className="flex items-center space-x-4">
             <span className="text-[10px] w-12 font-bold tracking-widest text-on-surface-variant uppercase">{zone.name}</span>
             <div className="flex-1 h-3 bg-surface-container-lowest rounded-sm overflow-hidden border border-[rgba(64,72,93,0.3)]">
