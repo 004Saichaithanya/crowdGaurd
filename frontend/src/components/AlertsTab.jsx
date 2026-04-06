@@ -9,6 +9,12 @@ function getAlertTone(alert) {
 }
 
 export function AlertsTab({ alerts, activeAlerts, dispatchAlert, ignoreAlert, alertActionState, refreshAlerts }) {
+  const formatPeak = (alert) => {
+    if (typeof alert.peak_people_count === 'number') return alert.peak_people_count;
+    if (typeof alert.people_count === 'number') return alert.people_count;
+    return 'N/A';
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between p-5 glass-panel border ghost-border">
@@ -24,7 +30,7 @@ export function AlertsTab({ alerts, activeAlerts, dispatchAlert, ignoreAlert, al
 
       <div className="glass-card border ghost-border p-6">
         {alerts.length === 0 ? (
-          <div className="text-on-surface-variant">No active alerts in the last 10 minutes.</div>
+          <div className="text-on-surface-variant">No alerts are currently available for display.</div>
         ) : (
           <ul className="space-y-4">
             {alerts.map((alert) => (
@@ -39,7 +45,7 @@ export function AlertsTab({ alerts, activeAlerts, dispatchAlert, ignoreAlert, al
                     <h3 className="text-base font-bold text-white mt-1">{alert.title || alert.message}</h3>
                     <p className="text-xs text-on-surface-variant mt-1">{alert.message}</p>
                     <p className="text-[11px] text-on-surface-variant mt-2">
-                      {`Response: ${alert.response || 'pending'} | Peak people: ${alert.peak_people_count || alert.people_count || 0}`}
+                      {`Response: ${alert.response || 'pending'} | Peak people: ${formatPeak(alert)}`}
                     </p>
                   </div>
                   <div className="text-right">

@@ -18,6 +18,11 @@ export function AlertsPanel({
       default: return { border: 'border-l-on-surface-variant', text: 'text-on-surface-variant', label: 'MESSAGE' };
     }
   };
+  const formatPeak = (alert) => {
+    if (typeof alert.peak_people_count === 'number') return alert.peak_people_count;
+    if (typeof alert.people_count === 'number') return alert.people_count;
+    return 'N/A';
+  };
 
   return (
     <div className="glass-card flex flex-col h-full border ghost-border overflow-hidden">
@@ -61,7 +66,7 @@ export function AlertsPanel({
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-on-surface-variant">
                 <span>{`Response: ${alert.response || 'pending'}`}</span>
                 <span className="text-on-surface-variant/40">|</span>
-                <span>{`Peak: ${alert.peak_people_count || alert.people_count || 0}`}</span>
+                <span>{`Peak: ${formatPeak(alert)}`}</span>
               </div>
 
               {alert.action && alert.status === 'active' && (

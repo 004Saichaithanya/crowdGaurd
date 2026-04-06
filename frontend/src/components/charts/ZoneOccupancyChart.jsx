@@ -18,11 +18,11 @@ export function ZoneOccupancyChart({ data }) {
     <div className="glass-card p-6 h-full flex flex-col border ghost-border group">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-xs font-bold tracking-[0.15em] text-on-surface-variant uppercase">Zone Occupancy Heat</h3>
-        <button className="text-on-surface-variant hover:text-white transition-colors">
+        <div className="text-on-surface-variant transition-colors" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M4 6H20M4 12H14M4 18H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        </button>
+        </div>
       </div>
       
       <div className="flex-1 space-y-6">
