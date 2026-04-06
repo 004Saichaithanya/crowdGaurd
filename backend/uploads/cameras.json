@@ -2,17 +2,17 @@
   "cameras": [
     {
       "camera_id": "camera-1",
-      "display_name": "camera 1",
-      "source": "D:\\crowdGaurd\\backend\\uploads\\yatra.mp4",
+      "display_name": "Crowd Vid",
+      "source": "C:\\SaiChaithanya\\miniProjectV2\\crowdGaurd\\backend\\uploads\\crowd_vid.mp4",
       "managed": true,
-      "file_hash": "2a958e09fe22d4fff11da01600896708ba30fd0afbfa354e4b7d05ee976be0a6"
+      "file_hash": "822671fb20ed13ef9ead91d1f3678863b5aa078dd3b2ed45953fda39a61c979d"
     },
     {
       "camera_id": "camera-2",
-      "display_name": "Camera 2",
-      "source": "D:\\crowdGaurd\\backend\\uploads\\drone_v2.mp4",
+      "display_name": "Road Show",
+      "source": "C:\\SaiChaithanya\\miniProjectV2\\crowdGaurd\\backend\\uploads\\road_show.mp4",
       "managed": true,
-      "file_hash": "721d440e90b1a6cd5a6e8a79bbb9ddea462371a2dc5265056e36775dd6dc8803"
+      "file_hash": "209fa672700af99d8f2be4df984a6bc2526fb9af2bfa8ea6beb33bad2ebd7cd2"
     }
   ]
 }

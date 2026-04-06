@@ -23,6 +23,8 @@ from modeling import ModelConfig, ModelResolver, PerformanceTracker, current_tim
 from processing import AdaptiveFrameRateController, AdaptiveProcessingConfig
 print("Ultralytics imported", flush=True)
 
+BASE_DIR = Path(__file__).resolve().parent
+
 # ---------------- APP SETUP ----------------
 app = Flask(__name__)
 CORS(app)
@@ -512,33 +514,6 @@ def detection_loop(camera_state):
             "deployment_mode": deployment_profile.name,
             "people_count": count,
             "density": density,
-<<<<<<< HEAD
-            "baseline_density": density_result.baseline_label,
-            "weighted_density": round(density_result.weighted_density, 6),
-            "smoothed_weighted_density": round(density_result.smoothed_weighted_density, 6),
-            "density_smoothing_alpha": density_config.smoothing_alpha,
-            "baseline_density_score": round(density_result.baseline_density_score, 6),
-            "adaptive_density_thresholds": [round(value, 6) for value in density_result.adaptive_thresholds],
-            "adaptive_threshold_window": density_config.adaptive_threshold_window,
-            "perspective_zones": density_result.perspective_zone_counts,
-            "perspective_zone_score": [round(score, 3) for score in density_result.perspective_zone_score],
-            "surge_alert_active": camera_state.active_surge_alert_id is not None,
-            "count_delta": anomaly_result.count_delta,
-            "count_velocity": round(anomaly_result.velocity, 3),
-            "processing_interval_seconds": round(processing_interval, 3),
-            "processing_fps": round(camera_state.frame_rate_controller.current_fps, 2),
-            "model_name": model_selection.active_model,
-            "requested_model": model_selection.requested_model,
-            "model_fallback_used": model_selection.fallback_used,
-            "inference_latency_ms": round(inference_latency_ms, 2),
-            "measured_fps": performance_snapshot["measured_fps"],
-            "average_latency_ms": performance_snapshot["latency_ms"],
-        socketio.emit("crowd_update", {
-            "camera_id": camera_state.config.camera_id,
-            "camera_name": camera_state.config.display_name,
-            "deployment_mode": deployment_profile.name,
-            "people_count": count,
-            "density": density,
             "baseline_density": density_result.baseline_label,
             "weighted_density": round(density_result.weighted_density, 6),
             "smoothed_weighted_density": round(density_result.smoothed_weighted_density, 6),
@@ -566,7 +541,6 @@ def detection_loop(camera_state):
             "zones": zones,
             "alerts_count": len(active_alerts(camera_state.config.camera_id)),
             "high_density_events": high_density_events
-        })
         })
 
         camera_state.frame_index += 1
