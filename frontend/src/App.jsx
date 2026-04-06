@@ -61,7 +61,15 @@ export default function App() {
   };
 
   return (
-    <Layout activeView={activeView} onViewChange={setActiveView}>
+    <Layout
+      activeView={activeView}
+      onViewChange={setActiveView}
+      deploymentInfo={crowdData.deploymentInfo}
+      modelInfo={crowdData.modelInfo}
+      cameras={crowdData.cameras}
+      activeAlerts={crowdData.activeAlerts}
+      isConnected={crowdData.isConnected}
+    >
       {renderView()}
     </Layout>
   );

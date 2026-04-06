@@ -1,0 +1,18 @@
+{
+  "cameras": [
+    {
+      "camera_id": "camera-1",
+      "display_name": "camera 1",
+      "source": "D:\\crowdGaurd\\backend\\uploads\\yatra.mp4",
+      "managed": true,
+      "file_hash": "2a958e09fe22d4fff11da01600896708ba30fd0afbfa354e4b7d05ee976be0a6"
+    },
+    {
+      "camera_id": "camera-2",
+      "display_name": "Camera 2",
+      "source": "D:\\crowdGaurd\\backend\\uploads\\drone_v2.mp4",
+      "managed": true,
+      "file_hash": "721d440e90b1a6cd5a6e8a79bbb9ddea462371a2dc5265056e36775dd6dc8803"
+    }
+  ]
+}

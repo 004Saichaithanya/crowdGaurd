@@ -3,18 +3,19 @@ import { ZoneOccupancyChart } from './charts/ZoneOccupancyChart';
 import { KpiCard } from './KpiCard';
 
 export function ZonesTab({ liveData, refreshZones }) {
-  const total = liveData.people_count || 1;
+  const hasLiveCount = typeof liveData.people_count === 'number';
+  const total = hasLiveCount ? liveData.people_count : 0;
   const mostActiveZone = liveData.zones?.length === 4
     ? liveData.zones.indexOf(Math.max(...liveData.zones)) + 1
-    : 1;
+    : null;
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-500">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <KpiCard title="Total Occupancy" value={(liveData.people_count ?? 0).toLocaleString()} accentColor="secondary" />
-        <KpiCard title="Active Zone" value={`Zone ${mostActiveZone}`} accentColor="tertiary" />
-        <KpiCard title="Alert Pressure" value={`${liveData.alerts_count ?? 0}`} accentColor="error" />
-        <KpiCard title="Refresh" value="Now" subtext="Tap refresh" accentColor="primary" />
+        <KpiCard title="Total Occupancy" value={hasLiveCount ? liveData.people_count.toLocaleString() : 'N/A'} accentColor="secondary" />
+        <KpiCard title="Active Zone" value={mostActiveZone ? `Zone ${mostActiveZone}` : 'Awaiting telemetry'} accentColor="tertiary" />
+        <KpiCard title="Alert Pressure" value={typeof liveData.alerts_count === 'number' ? `${liveData.alerts_count}` : 'N/A'} accentColor="error" />
+        <KpiCard title="Refresh" value="Live" subtext="Manual sync available" accentColor="primary" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

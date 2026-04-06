@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = 'http://127.0.0.1:5000';
-const VIDEO_URL = `${SOCKET_URL}/video`;
 
 function normalizeAlert(alert) {
   if (!alert) {
@@ -22,13 +21,36 @@ export function useCrowdData() {
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [connectionError, setConnectionError] = useState('');
+  const [cameras, setCameras] = useState([]);
+  const [defaultCameraId, setDefaultCameraId] = useState(null);
+  const [activeCameraId, setActiveCameraId] = useState(null);
+  const [deploymentInfo, setDeploymentInfo] = useState({
+    mode: null,
+    preferred_model: null,
+    benchmark_enabled: null,
+    metrics_window_size: null,
+    adaptive_processing: null,
+    notes: '',
+  });
+  const [modelInfo, setModelInfo] = useState({
+    deployment_mode: null,
+    requested_model: null,
+    active_model: null,
+    fallback_used: null,
+    available_models: [],
+  });
   
   // Current Live Data
   const [liveData, setLiveData] = useState({
-    people_count: 0,
-    density: 'Low', // 'Low', 'Medium', 'High'
-    zones: [0, 0, 0, 0],
-    alerts_count: 0,
+    camera_id: null,
+    camera_name: null,
+    people_count: null,
+    density: null,
+    zones: [],
+    alerts_count: null,
+    average_latency_ms: null,
+    inference_latency_ms: null,
+    deployment_mode: null,
   });
 
   // Historical Data (for charts)
@@ -40,6 +62,8 @@ export function useCrowdData() {
   const [alertSummary, setAlertSummary] = useState({ active_alerts_count: 0, total_events: 0 });
   const [aiTraining, setAiTraining] = useState({ status: 'idle', progress: 0, message: 'Idle' });
   const [trainingLog, setTrainingLog] = useState([]);
+  const [uploadState, setUploadState] = useState({ status: 'idle', message: '', progress: 0 });
+  const [cameraUpdateState, setCameraUpdateState] = useState({});
 
   const apiFetch = async (endpoint, options = {}) => {
     try {
@@ -53,7 +77,8 @@ export function useCrowdData() {
   };
 
   const refreshAlerts = async () => {
-    const result = await apiFetch('/api/alerts');
+    const cameraQuery = activeCameraId ? `?camera_id=${encodeURIComponent(activeCameraId)}` : '';
+    const result = await apiFetch(`/api/alerts${cameraQuery}`);
     if (result?.alerts) {
       setAlerts(result.alerts.map(normalizeAlert).filter(Boolean));
       setAlertSummary({
@@ -64,9 +89,31 @@ export function useCrowdData() {
   };
 
   const refreshZones = async () => {
-    const result = await apiFetch('/api/zones');
+    const endpoint = activeCameraId
+      ? `/api/cameras/${encodeURIComponent(activeCameraId)}/zones`
+      : '/api/zones';
+    const result = await apiFetch(endpoint);
     if (result?.zones) {
-      setLiveData(prev => ({ ...prev, zones: result.zones, people_count: result.total_people || prev.people_count }));
+      setLiveData(prev => ({
+        ...prev,
+        camera_id: result.camera_id || prev.camera_id,
+        zones: result.zones,
+        people_count: result.total_people ?? prev.people_count,
+      }));
+    }
+  };
+
+  const refreshCameras = async () => {
+    const result = await apiFetch('/api/cameras');
+    if (result?.cameras) {
+      setCameras(result.cameras);
+      setDefaultCameraId(result.default_camera_id || null);
+      setActiveCameraId((prev) => {
+        if (prev && result.cameras.some((camera) => camera.camera_id === prev)) {
+          return prev;
+        }
+        return result.default_camera_id || result.cameras[0]?.camera_id || null;
+      });
     }
   };
 
@@ -74,6 +121,20 @@ export function useCrowdData() {
     const result = await apiFetch('/api/training');
     if (result) {
       setAiTraining(result);
+    }
+  };
+
+  const refreshDeployment = async () => {
+    const result = await apiFetch('/api/deployment');
+    if (result) {
+      setDeploymentInfo(result);
+    }
+  };
+
+  const refreshModelInfo = async () => {
+    const result = await apiFetch('/api/model');
+    if (result) {
+      setModelInfo(result);
     }
   };
 
@@ -91,6 +152,139 @@ export function useCrowdData() {
       setAiTraining(prev => ({ ...prev, status: 'stopping', message: result.message }));
       setTrainingLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${result.message}`]);
     }
+  };
+
+  const uploadRecordedVideo = async (file, displayName = '') => {
+    if (!file) {
+      return false;
+    }
+
+    const formData = new FormData();
+    formData.append('video', file);
+    if (displayName) {
+      formData.append('display_name', displayName);
+    }
+
+    setUploadState({ status: 'uploading', message: 'Uploading recorded video...', progress: 0 });
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${SOCKET_URL}/api/cameras/upload`);
+
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) {
+            return;
+          }
+
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setUploadState({
+            status: 'uploading',
+            message: `Uploading recorded video... ${percent}%`,
+            progress: percent,
+          });
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch (error) {
+              reject(error);
+            }
+            return;
+          }
+          try {
+            const payload = JSON.parse(xhr.responseText);
+            reject(new Error(payload.error || `HTTP ${xhr.status}`));
+          } catch (error) {
+            reject(new Error(`HTTP ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.send(formData);
+      });
+      await refreshCameras();
+      setActiveCameraId(result.camera_id || null);
+      setUploadState({ status: 'completed', message: 'Recorded video uploaded successfully.', progress: 100 });
+      return true;
+    } catch (err) {
+      console.error('Upload Error', err);
+      setUploadState({ status: 'error', message: err.message || 'Unable to upload recorded video.', progress: 0 });
+      return false;
+    }
+  };
+
+  const renameCamera = async (cameraId, displayName) => {
+    if (!cameraId || !displayName?.trim()) {
+      return false;
+    }
+
+    setCameraUpdateState((prev) => ({ ...prev, [cameraId]: 'saving' }));
+    try {
+      const resp = await fetch(`${SOCKET_URL}/api/cameras/${encodeURIComponent(cameraId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ display_name: displayName.trim() }),
+      });
+      const payload = await resp.json();
+      if (!resp.ok) {
+        throw new Error(payload.error || `HTTP ${resp.status}`);
+      }
+
+      setCameras((prev) => prev.map((camera) => (
+        camera.camera_id === cameraId
+          ? { ...camera, display_name: payload.camera.display_name }
+          : camera
+      )));
+      setLiveData((prev) => (
+        prev.camera_id === cameraId
+          ? { ...prev, camera_name: payload.camera.display_name }
+          : prev
+      ));
+      setCameraUpdateState((prev) => ({ ...prev, [cameraId]: 'saved' }));
+      return true;
+    } catch (err) {
+      console.error('Rename Error', err);
+      setCameraUpdateState((prev) => ({ ...prev, [cameraId]: 'error' }));
+      return false;
+    }
+  };
+
+  const removeCamera = async (cameraId) => {
+    if (!cameraId) {
+      return false;
+    }
+
+    const result = await apiFetch(`/api/cameras/${encodeURIComponent(cameraId)}`, { method: 'DELETE' });
+    if (!result) {
+      return false;
+    }
+
+    setCameras(result.cameras || []);
+    setDefaultCameraId(result.default_camera_id || null);
+    setActiveCameraId((prev) => (
+      prev === cameraId
+        ? result.default_camera_id || result.cameras?.[0]?.camera_id || null
+        : prev
+    ));
+
+    setHistory([]);
+    setLiveData({
+      camera_id: result.default_camera_id || null,
+      camera_name: null,
+      people_count: null,
+      density: null,
+      zones: [],
+      alerts_count: null,
+      average_latency_ms: null,
+      inference_latency_ms: null,
+      deployment_mode: deploymentInfo?.mode || null,
+    });
+    await refreshAlerts();
+    await refreshZones();
+    return true;
   };
 
   const acknowledgeAlert = (id) => {
@@ -136,6 +330,19 @@ export function useCrowdData() {
   const ignoreAlert = (id) => performAlertAction(id, 'ignore');
 
   useEffect(() => {
+    setHistory([]);
+    setLiveData({
+      camera_id: activeCameraId,
+      camera_name: null,
+      people_count: null,
+      density: null,
+      zones: [],
+      alerts_count: null,
+      average_latency_ms: null,
+      inference_latency_ms: null,
+      deployment_mode: deploymentInfo?.mode || null,
+    });
+
     // Initialize Socket connection
     const newSocket = io(SOCKET_URL, {
       transports: ['polling', 'websocket'],
@@ -153,6 +360,9 @@ export function useCrowdData() {
       setConnectionError('');
       refreshAlerts();
       refreshZones();
+      refreshCameras();
+      refreshDeployment();
+      refreshModelInfo();
       refreshTraining();
     });
 
@@ -171,26 +381,35 @@ export function useCrowdData() {
     newSocket.on('crowd_update', (data) => {
       // data expected: { people_count: number, density: string }
       if (!data) return;
+      if (activeCameraId && data.camera_id !== activeCameraId) return;
 
       const now = Date.now();
       const timestamp = new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
       setLiveData({
-        people_count: data.people_count || 0,
-        density: data.density || 'Low',
-        zones: data.zones || [0, 0, 0, 0],
-        alerts_count: data.high_density_events || data.alerts_count || 0,
+        camera_id: data.camera_id || null,
+        camera_name: data.camera_name || null,
+        people_count: data.people_count ?? null,
+        density: data.density || null,
+        zones: data.zones || [],
+        alerts_count: data.high_density_events ?? data.alerts_count ?? null,
+        average_latency_ms: data.average_latency_ms ?? null,
+        inference_latency_ms: data.inference_latency_ms ?? null,
+        deployment_mode: data.deployment_mode || null,
       });
       setLastUpdated(now);
       setAlertSummary(prev => ({
         ...prev,
-        active_alerts_count: data.alerts_count || 0,
-        total_events: data.high_density_events || prev.total_events,
+        active_alerts_count: data.alerts_count ?? 0,
+        total_events: data.high_density_events ?? prev.total_events,
       }));
 
       // Update history for charts (keep last 20 data points)
       setHistory(prev => {
-        const newData = [...prev, { time: timestamp, count: data.people_count || 0 }];
+        if (typeof data.people_count !== 'number') {
+          return prev;
+        }
+        const newData = [...prev, { time: timestamp, count: data.people_count }];
         return newData.length > 20 ? newData.slice(newData.length - 20) : newData;
       });
 
@@ -242,6 +461,9 @@ export function useCrowdData() {
     // pre-populate from backend API
     refreshZones();
     refreshAlerts();
+    refreshCameras();
+    refreshDeployment();
+    refreshModelInfo();
     refreshTraining();
 
     return () => {
@@ -255,10 +477,12 @@ export function useCrowdData() {
       newSocket.off('training_update');
       newSocket.close();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeCameraId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeAlerts = alerts.filter((alert) => alert.status === 'active');
   const recentAlerts = alerts.filter((alert) => alert.status !== 'ignored');
+  const activeCamera = cameras.find((camera) => camera.camera_id === activeCameraId) || null;
+  const activeVideoUrl = activeCameraId ? `${SOCKET_URL}/video/${encodeURIComponent(activeCameraId)}` : null;
 
   return {
     isConnected,
@@ -273,13 +497,28 @@ export function useCrowdData() {
     connectionError,
     aiTraining,
     trainingLog,
+    uploadState,
+    cameraUpdateState,
+    deploymentInfo,
+    modelInfo,
     socketUrl: SOCKET_URL,
-    videoUrl: VIDEO_URL,
+    videoUrl: activeVideoUrl,
+    cameras,
+    defaultCameraId,
+    activeCameraId,
+    activeCamera,
+    setActiveCameraId,
     refreshAlerts,
     refreshZones,
+    refreshCameras,
+    refreshDeployment,
+    refreshModelInfo,
     refreshTraining,
     startTraining,
     stopTraining,
+    uploadRecordedVideo,
+    renameCamera,
+    removeCamera,
     acknowledgeAlert,
     dispatchAlert,
     ignoreAlert,

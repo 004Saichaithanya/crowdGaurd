@@ -12,12 +12,23 @@ export function Dashboard({
   activeAlerts,
   alertSummary,
   videoUrl,
+  cameras,
+  deploymentInfo,
+  modelInfo,
   dispatchAlert,
   ignoreAlert,
   alertActionState,
 }) {
+  const occupancyValue = typeof liveData.people_count === 'number' ? liveData.people_count.toLocaleString() : 'N/A';
+  const densityValue = liveData.density ? liveData.density.toUpperCase() : 'AWAITING';
+  const cameraCount = Array.isArray(cameras) ? cameras.length : 0;
+  const latencyValue = typeof liveData.average_latency_ms === 'number' ? `${Math.round(liveData.average_latency_ms)}ms` : 'Awaiting telemetry';
+  const deploymentMode = deploymentInfo?.mode ? deploymentInfo.mode.toUpperCase() : 'AWAITING';
+  const modelLabel = modelInfo?.active_model || 'Awaiting model';
+
   // Status computation for UI based on density
   const getDensityHighlight = (density) => {
+    if (!density) return { type: 'warning', text: 'PENDING' };
     switch (density.toLowerCase()) {
       case 'high': return { type: 'critical', text: 'CRITICAL' };
       case 'medium': return { type: 'warning', text: 'WARNING' };
@@ -32,20 +43,19 @@ export function Dashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard 
           title="Total Occupancy" 
-          value={liveData.people_count.toLocaleString()}
-          subtext="+12%" 
+          value={occupancyValue}
           accentColor="secondary"
         />
         <KpiCard 
           title="Density Status" 
-          value={liveData.density.toUpperCase()}
+          value={densityValue}
           highlight={getDensityHighlight(liveData.density)}
-          accentColor={liveData.density.toLowerCase() === 'high' ? 'error' : liveData.density.toLowerCase() === 'medium' ? 'tertiary' : 'secondary'}
+          accentColor={liveData.density?.toLowerCase() === 'high' ? 'error' : liveData.density?.toLowerCase() === 'medium' ? 'tertiary' : 'secondary'}
         />
         <KpiCard 
-          title="Network Nodes" 
-          value="4" 
-          subtext="/ 4" 
+          title="Camera Nodes" 
+          value={cameraCount > 0 ? cameraCount.toString() : 'N/A'}
+          subtext={cameraCount > 0 ? 'configured' : 'Awaiting inventory'}
           accentColor="on-surface-variant"
         />
         <KpiCard 
@@ -62,7 +72,12 @@ export function Dashboard({
         {/* Left Column (Video & Charts) */}
         <div className="lg:col-span-2 flex flex-col space-y-6">
           <div className="flex-1 max-h-[480px]">
-            <VideoFeed videoUrl={videoUrl} isConnected={isConnected} />
+            <VideoFeed
+              videoUrl={videoUrl}
+              isConnected={isConnected}
+              cameraName={liveData.camera_name || liveData.camera_id}
+              deploymentMode={liveData.deployment_mode || deploymentInfo?.mode}
+            />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ minHeight: 250 }}>
             <CrowdFlowChart data={history} />
@@ -92,10 +107,10 @@ export function Dashboard({
           </span>
         </div>
         <div className="flex items-center space-x-2 border-l ghost-border pl-6">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-white">Sync_Complete</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase text-white">{`${deploymentMode} | ${modelLabel}`}</span>
         </div>
         <div className="flex items-center space-x-2 border-l ghost-border pl-6">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant">Latency: 14ms</span>
+          <span className="text-[10px] font-bold tracking-widest uppercase text-on-surface-variant">{`Latency: ${latencyValue}`}</span>
         </div>
       </div>
     </div>
